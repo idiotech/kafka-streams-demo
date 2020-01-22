@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "FollowPair",
+  "namespace": "tw.idv.idiotech.demo.kafkastreams",
+  "fields": [
+    {
+      "name": "influencerId",
+      "type": "string"
+    },
+    {
+      "name": "followerId",
+      "type": "string"
+    }
+  ]
+}

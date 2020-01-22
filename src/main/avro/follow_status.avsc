@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "FollowStatus",
+  "namespace": "tw.idv.idiotech.demo.kafkastreams",
+  "fields": [
+    {
+      "name": "time",
+      "type": "long"
+    },
+    {
+      "name": "deleted",
+      "type": "boolean",
+      "default": false
+    }
+  ]
+}

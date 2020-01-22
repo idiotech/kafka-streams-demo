@@ -1,0 +1,24 @@
+{
+  "type": "record",
+  "name": "Photo",
+  "namespace": "tw.idv.idiotech.demo.kafkastreams",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string"
+    },
+    {
+      "name": "url",
+      "type": "string"
+    },
+    {
+      "name": "uploader",
+      "type": "string"
+    },
+    {
+      "name": "deleted",
+      "type": "boolean",
+      "default": false
+    }
+  ]
+}
