@@ -3,7 +3,7 @@ package tw.idv.idiotech.demo.kafkastreams
 import org.apache.kafka.streams.TopologyTestDriver
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.must.Matchers
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 class StreamsSpec extends AnyFlatSpec with Matchers with  MockKafkaStreams with Streams {
 

@@ -30,7 +30,7 @@ case class InnerSerdes(des: KafkaAvroDeserializer, ser: KafkaAvroSerializer) {
 
 trait ScalaSerdes {
 
-  import scala.jdk.CollectionConverters._
+  import scala.collection.JavaConverters._
   val schemaRegistry: String
   def config = Map(SCHEMA_REGISTRY_URL_CONFIG -> schemaRegistry, AUTO_REGISTER_SCHEMAS -> true).asJava
 
