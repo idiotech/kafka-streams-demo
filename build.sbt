@@ -33,4 +33,4 @@ def project(projectName: String) = Project(projectName, new File(projectName)).s
 )
 
 val kafkaAvroSerdes = project("kafka-avro-serdes")
-val hackagram = project("hackagram").dependsOn(kafkaAvroSerdes)
+val hackagram = project("hackagram").dependsOn(kafkaAvroSerdes % "test->test;compile->compile")

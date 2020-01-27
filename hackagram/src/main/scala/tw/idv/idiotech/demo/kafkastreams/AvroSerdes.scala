@@ -1,6 +1,6 @@
 package tw.idv.idiotech.demo.kafkastreams
 
-import tw.idv.idiotech.demo.kafkastreams.avro.{KeySerde, ScalaSerdes, ValueSerde}
+import tw.idv.idiotech.kafkastreams.avro.{ KeySerde, ScalaSerdes, ValueSerde }
 
 trait AvroSerdes extends ScalaSerdes {
   implicit def userValueSerde: ValueSerde[User] = valueSerde

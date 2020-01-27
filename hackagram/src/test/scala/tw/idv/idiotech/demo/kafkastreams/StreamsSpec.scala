@@ -4,8 +4,9 @@ import org.apache.kafka.streams.TopologyTestDriver
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.must.Matchers
 import scala.collection.JavaConverters._
+import tw.idv.idiotech.kafkastreams.avro.StreamsImplicits._
 
-class StreamsSpec extends AnyFlatSpec with Matchers with  MockKafkaStreams with Streams {
+class StreamsSpec extends AnyFlatSpec with Matchers with MockKafkaStreams with Streams {
 
   val stella = User("stella", "Stella Hackworth")
   val colin = User("colin", "Colin Codesmith")
@@ -16,8 +17,6 @@ class StreamsSpec extends AnyFlatSpec with Matchers with  MockKafkaStreams with 
   val lonelyFigure = Photo("photo-3", "http://lonely.figure/image", colin.id, false)
 
   val hackagramTopology = topology()
-
-  import tw.idv.idiotech.demo.kafkastreams.avro.StreamsImplicits._
 
   def produceUsers()(implicit testDriver: TopologyTestDriver) = {
     val userInput = getInputTopic[String, User]("users")
@@ -35,8 +34,14 @@ class StreamsSpec extends AnyFlatSpec with Matchers with  MockKafkaStreams with 
 
   def produceFollowers()(implicit testDriver: TopologyTestDriver) = {
     val followInput = getInputTopic[FollowPair, FollowStatus]("follows")
-    followInput.pipeInput(FollowPair(stella.id, stalker.id), FollowStatus(System.currentTimeMillis(), false))
-    followInput.pipeInput(FollowPair(colin.id, stalker.id), FollowStatus(System.currentTimeMillis(), false))
+    followInput.pipeInput(
+      FollowPair(stella.id, stalker.id),
+      FollowStatus(System.currentTimeMillis(), false)
+    )
+    followInput.pipeInput(
+      FollowPair(colin.id, stalker.id),
+      FollowStatus(System.currentTimeMillis(), false)
+    )
   }
 
   "streams" must "create timeline for user" in {
@@ -72,7 +77,10 @@ class StreamsSpec extends AnyFlatSpec with Matchers with  MockKafkaStreams with 
     println(timelineOutput.readKeyValue())
     println(timelineOutput.readKeyValue())
     val followInput = getInputTopic[FollowPair, FollowStatus]("follows")
-    followInput.pipeInput(FollowPair(colin.id, stalker.id), FollowStatus(System.currentTimeMillis(), true))
+    followInput.pipeInput(
+      FollowPair(colin.id, stalker.id),
+      FollowStatus(System.currentTimeMillis(), true)
+    )
     println(timelineOutput.readKeyValue())
   }
 
@@ -92,17 +100,20 @@ class StreamsSpec extends AnyFlatSpec with Matchers with  MockKafkaStreams with 
     produceFollowers()
 
     val followInput = getInputTopic[FollowPair, FollowStatus]("follows")
-    followInput.pipeInput(FollowPair(stella.id, colin.id), FollowStatus(System.currentTimeMillis(), false))
+    followInput.pipeInput(
+      FollowPair(stella.id, colin.id),
+      FollowStatus(System.currentTimeMillis(), false)
+    )
 
     val followerCountTopic = getOutputTopic[String, Long]("follower_count")
     followerCountTopic.readKeyValuesToMap().asScala mustBe Map(
       "stella" -> 2,
-      "colin" -> 1
+      "colin"  -> 1
     )
 
     val influencerCountTopic = getOutputTopic[String, Long]("influencer_count")
     influencerCountTopic.readKeyValuesToMap().asScala mustBe Map(
-      "colin" -> 1,
+      "colin"   -> 1,
       "stalker" -> 2
     )
   }
@@ -113,18 +124,24 @@ class StreamsSpec extends AnyFlatSpec with Matchers with  MockKafkaStreams with 
     produceFollowers()
 
     val followInput = getInputTopic[FollowPair, FollowStatus]("follows")
-    followInput.pipeInput(FollowPair(stella.id, colin.id), FollowStatus(System.currentTimeMillis(), false))
-    followInput.pipeInput(FollowPair(stella.id, colin.id), FollowStatus(System.currentTimeMillis(), true))
+    followInput.pipeInput(
+      FollowPair(stella.id, colin.id),
+      FollowStatus(System.currentTimeMillis(), false)
+    )
+    followInput.pipeInput(
+      FollowPair(stella.id, colin.id),
+      FollowStatus(System.currentTimeMillis(), true)
+    )
 
     val followerCountTopic = getOutputTopic[String, Long]("follower_count")
     followerCountTopic.readKeyValuesToMap().asScala mustBe Map(
       "stella" -> 1,
-      "colin" -> 1
+      "colin"  -> 1
     )
 
     val influencerCountTopic = getOutputTopic[String, Long]("influencer_count")
     influencerCountTopic.readKeyValuesToMap().asScala mustBe Map(
-      "colin" -> 0,
+      "colin"   -> 0,
       "stalker" -> 2
     )
   }
@@ -136,7 +153,7 @@ class StreamsSpec extends AnyFlatSpec with Matchers with  MockKafkaStreams with 
     val photoCountTopic = getOutputTopic[String, Long]("photo_count")
     photoCountTopic.readKeyValuesToMap().asScala mustBe Map(
       "stella" -> 2,
-      "colin" -> 1
+      "colin"  -> 1
     )
   }
 }
