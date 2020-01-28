@@ -16,6 +16,10 @@
       "type": "string"
     },
     {
+      "name": "timestamp",
+      "type": "long"
+    },
+    {
       "name": "deleted",
       "type": "boolean",
       "default": false

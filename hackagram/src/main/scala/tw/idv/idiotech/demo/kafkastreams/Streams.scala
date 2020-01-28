@@ -3,6 +3,7 @@ package tw.idv.idiotech.demo.kafkastreams
 import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.scala.kstream._
 import org.apache.kafka.streams.scala.StreamsBuilder
+import goggles._
 
 trait Streams extends AvroSerdes {
 
@@ -31,27 +32,22 @@ trait Streams extends AvroSerdes {
     val photoByUploaderStream: KStream[Uploader, Photo] =
       photoStream.selectKey((_, v) => v.uploader)
 
-    val denormalizedPhotoByUploder: KStream[Uploader, DenormalizedPhoto] = photoByUploaderStream
+    val denormalizedPhotoByUploader: KStream[Uploader, DenormalizedPhoto] = photoByUploaderStream
       .join(userTable)(DenormalizedPhoto.apply)
 
     val denormalizedPhotoByFollower: KStream[FollowerId, DenormalizedPhoto] =
-      denormalizedPhotoByUploder
+      denormalizedPhotoByUploader
         .join(followersByInfluencer)(
           (photoAndUser, followers) => FollowersOfPhoto(photoAndUser, followers.data)
         )
         .flatMap(
-          (k, v) =>
+          (_, v) =>
             v.followers.map(
               f =>
                 (
                   f.followPair.followerId,
-                  v.photoAndUser.copy(
-                    photo = v.photoAndUser.photo.copy(
-                      deleted =
-                        if (v.photoAndUser.photo.deleted) true
-                        else f.followInfo.deleted
-                    )
-                  )
+                  set"${v.photoAndUser}.photo.deleted" :=
+                    (if (v.photoAndUser.photo.deleted) true else f.followInfo.deleted)
                 )
             )
         )
@@ -63,7 +59,7 @@ trait Streams extends AvroSerdes {
       newPosts.foldLeft(photoList)(
         (list, photoAndUser) =>
           if (photoAndUser.photo.deleted) list.filterNot(_.photo.id == photoAndUser.photo.id)
-          else (photoAndUser :: list).take(500) // optional // scala sorted list
+          else (photoAndUser :: list).sortBy(d => 0 - d.photo.timestamp)
       )
 
     val timelineTable: KTable[FollowerId, Timeline] =
@@ -73,11 +69,8 @@ trait Streams extends AvroSerdes {
 
     timelineTable.toStream.to("timeline")
 
-    // unfollow: join timeline, delete everything from that user
-    // follow: get aggregated photos by user, add all
-
     val photosByUploaderTable: KTable[Uploader, Timeline] =
-      denormalizedPhotoByUploder.groupByKey.aggregate(Timeline(Nil))(
+      denormalizedPhotoByUploader.groupByKey.aggregate(Timeline(Nil))(
         (k, v, agg) => agg.copy(data = v :: agg.data)
       )
 
@@ -93,7 +86,7 @@ trait Streams extends AvroSerdes {
       )
       .selectKey((_, v) => v.followerId)
 
-    val timelineTableFromTopic = builder.table[String, Timeline]("timeline")
+    val timelineTableFromTopic = builder.table[UserId, Timeline]("timeline")
 
     val photosFromNewInfluencer = photosForFollowerStream.leftJoin(timelineTableFromTopic)(
       (photosForFollower, timeline) =>

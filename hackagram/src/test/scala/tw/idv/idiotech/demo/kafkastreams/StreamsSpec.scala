@@ -1,8 +1,11 @@
 package tw.idv.idiotech.demo.kafkastreams
 
+import java.time.{ ZoneId, ZonedDateTime }
+
 import org.apache.kafka.streams.TopologyTestDriver
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.must.Matchers
+
 import scala.collection.JavaConverters._
 import tw.idv.idiotech.kafkastreams.avro.StreamsImplicits._
 
@@ -12,9 +15,18 @@ class StreamsSpec extends AnyFlatSpec with Matchers with MockKafkaStreams with S
   val colin = User("colin", "Colin Codesmith")
   val stalker = User("stalker", "Stalker")
 
-  val blueSunset = Photo("photo-1", "http://blue.sunset/image", stella.id, false)
-  val blueFlower = Photo("photo-2", "http://blue.flower/image", stella.id, false)
-  val lonelyFigure = Photo("photo-3", "http://lonely.figure/image", colin.id, false)
+  val thirteen = ZonedDateTime.of(2020, 10, 10, 13, 0, 0, 0, ZoneId.of("Asia/Taipei"))
+  val fourteen = thirteen.plusHours(1)
+  val fifteen = thirteen.plusHours(2)
+
+  val blueSunset =
+    Photo("photo-1", "http://blue.sunset/image", stella.id, fifteen.toInstant.toEpochMilli, false)
+
+  val blueFlower =
+    Photo("photo-2", "http://blue.flower/image", stella.id, thirteen.toInstant.toEpochMilli, false)
+
+  val lonelyFigure =
+    Photo("photo-3", "http://lonely.figure/image", colin.id, fourteen.toInstant.toEpochMilli, false)
 
   val hackagramTopology = topology()
 
@@ -52,7 +64,12 @@ class StreamsSpec extends AnyFlatSpec with Matchers with MockKafkaStreams with S
 
     val timelineOutput = getOutputTopic[String, Timeline]("timeline")
     val results = timelineOutput.readKeyValuesToMap().asScala
-    println(results)
+    results("stalker").data mustBe List(
+      DenormalizedPhoto(blueSunset, stella),
+      DenormalizedPhoto(lonelyFigure, colin),
+      DenormalizedPhoto(blueFlower, stella)
+    )
+    results.size mustBe 1
   }
 
   it must "delete image from timeline" in {
@@ -61,11 +78,14 @@ class StreamsSpec extends AnyFlatSpec with Matchers with MockKafkaStreams with S
     produceFollowers()
     producePhotos()
     val timelineOutput = getOutputTopic[String, Timeline]("timeline")
-    println(timelineOutput.readKeyValue())
-    println(timelineOutput.readKeyValue())
+    timelineOutput.readKeyValuesToMap()
     val photoInput = getInputTopic[String, Photo]("photos")
     photoInput.pipeInput(lonelyFigure.id, lonelyFigure.copy(deleted = true))
-    println(timelineOutput.readKeyValue())
+    val results = timelineOutput.readKeyValuesToMap().asScala
+    results("stalker").data mustBe List(
+      DenormalizedPhoto(blueSunset, stella),
+      DenormalizedPhoto(blueFlower, stella)
+    )
   }
 
   it must "delete images from a user who is unfollowed" in {
@@ -74,14 +94,17 @@ class StreamsSpec extends AnyFlatSpec with Matchers with MockKafkaStreams with S
     produceFollowers()
     producePhotos()
     val timelineOutput = getOutputTopic[String, Timeline]("timeline")
-    println(timelineOutput.readKeyValue())
-    println(timelineOutput.readKeyValue())
+    timelineOutput.readKeyValuesToMap()
     val followInput = getInputTopic[FollowPair, FollowStatus]("follows")
     followInput.pipeInput(
       FollowPair(colin.id, stalker.id),
       FollowStatus(System.currentTimeMillis(), true)
     )
-    println(timelineOutput.readKeyValue())
+    val results = timelineOutput.readKeyValuesToMap().asScala
+    results("stalker").data mustBe List(
+      DenormalizedPhoto(blueSunset, stella),
+      DenormalizedPhoto(blueFlower, stella)
+    )
   }
 
   it must "add photos to timeline when the user follows another user" in {
@@ -90,8 +113,13 @@ class StreamsSpec extends AnyFlatSpec with Matchers with MockKafkaStreams with S
     producePhotos()
     produceFollowers()
     val timelineOutput = getOutputTopic[String, Timeline]("timeline")
-    println(timelineOutput.readKeyValue())
-    println(timelineOutput.readKeyValue())
+    val results = timelineOutput.readKeyValuesToMap().asScala
+    results("stalker").data mustBe List(
+      DenormalizedPhoto(blueSunset, stella),
+      DenormalizedPhoto(lonelyFigure, colin),
+      DenormalizedPhoto(blueFlower, stella)
+    )
+    results.size mustBe 1
   }
 
   it must "calculate follower counts" in {
