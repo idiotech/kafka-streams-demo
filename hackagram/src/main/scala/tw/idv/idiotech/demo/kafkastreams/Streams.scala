@@ -13,7 +13,7 @@ trait Streams extends AvroSerdes with StreamsImplicits {
   type InfluencerId = String
   type UserId = String
   type PhotoId = String
-  
+
   def topology(): Topology = {
 
     val builder = new StreamsBuilder()

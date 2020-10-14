@@ -8,7 +8,11 @@ import org.scalatest.matchers.must.Matchers
 
 import scala.collection.JavaConverters._
 
-class StreamsHandsOnSpec extends AnyFlatSpec with Matchers with MockKafkaStreams with StreamsHandsOn {
+class StreamsHandsOnSpec
+    extends AnyFlatSpec
+    with Matchers
+    with MockKafkaStreams
+    with StreamsHandsOn {
 
   val stella = User("stella", "Stella Hackworth")
   val colin = User("colin", "Colin Codesmith")
@@ -68,9 +72,8 @@ class StreamsHandsOnSpec extends AnyFlatSpec with Matchers with MockKafkaStreams
     val followerCountTopic = getOutputTopic[String, Long]("follower-counts")
     followerCountTopic.readKeyValuesToMap().asScala mustBe Map(
       "stella" -> 2,
-      "colin" -> 1
+      "colin"  -> 1
     )
-
 
   }
 }
