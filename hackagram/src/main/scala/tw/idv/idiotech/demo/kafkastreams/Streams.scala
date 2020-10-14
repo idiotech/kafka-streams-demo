@@ -4,23 +4,25 @@ import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.scala.kstream._
 import org.apache.kafka.streams.scala.StreamsBuilder
 import goggles._
+import tw.idv.idiotech.kafkastreams.avro.StreamsImplicits
 
-trait Streams extends AvroSerdes {
+trait Streams extends AvroSerdes with StreamsImplicits {
 
+  type Uploader = String
+  type FollowerId = String
+  type InfluencerId = String
+  type UserId = String
+  type PhotoId = String
+  
   def topology(): Topology = {
 
-    import tw.idv.idiotech.kafkastreams.avro.StreamsImplicits._
     val builder = new StreamsBuilder()
-    type Uploader = String
-    type FollowerId = String
-    type UserId = String
-    type PhotoId = String
 
     val userTable: KTable[UserId, User] = builder.table("users")
-    val photoTable: KTable[String, Photo] = builder.table[String, Photo]("photos")
-    val photoStream: KStream[String, Photo] = photoTable.toStream
+    val photoTable: KTable[PhotoId, Photo] = builder.table[PhotoId, Photo]("photos")
+    val photoStream: KStream[PhotoId, Photo] = photoTable.toStream
     val followTable: KTable[FollowPair, FollowStatus] = builder.table("follows")
-    val followersByInfluencer: KTable[Uploader, FollowList] = followTable
+    val followersByInfluencer: KTable[InfluencerId, FollowList] = followTable
       .groupBy((k, v) => (k.influencerId, Follow(k, v)))
       .aggregate(
         FollowList(Nil)

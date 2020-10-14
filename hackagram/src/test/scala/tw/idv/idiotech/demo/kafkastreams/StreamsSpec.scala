@@ -7,7 +7,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.must.Matchers
 
 import scala.collection.JavaConverters._
-import tw.idv.idiotech.kafkastreams.avro.StreamsImplicits._
 
 class StreamsSpec extends AnyFlatSpec with Matchers with MockKafkaStreams with Streams {
 
@@ -30,6 +29,8 @@ class StreamsSpec extends AnyFlatSpec with Matchers with MockKafkaStreams with S
 
   val hackagramTopology = topology()
 
+  println(hackagramTopology.describe())
+
   def produceUsers()(implicit testDriver: TopologyTestDriver) = {
     val userInput = getInputTopic[String, User]("users")
     userInput.pipeInput(stella.id, stella)
@@ -48,11 +49,11 @@ class StreamsSpec extends AnyFlatSpec with Matchers with MockKafkaStreams with S
     val followInput = getInputTopic[FollowPair, FollowStatus]("follows")
     followInput.pipeInput(
       FollowPair(stella.id, stalker.id),
-      FollowStatus(System.currentTimeMillis(), false)
+      FollowStatus(System.currentTimeMillis())
     )
     followInput.pipeInput(
       FollowPair(colin.id, stalker.id),
-      FollowStatus(System.currentTimeMillis(), false)
+      FollowStatus(System.currentTimeMillis())
     )
   }
 
@@ -94,7 +95,6 @@ class StreamsSpec extends AnyFlatSpec with Matchers with MockKafkaStreams with S
     produceFollowers()
     producePhotos()
     val timelineOutput = getOutputTopic[String, Timeline]("timeline")
-    timelineOutput.readKeyValuesToMap()
     val followInput = getInputTopic[FollowPair, FollowStatus]("follows")
     followInput.pipeInput(
       FollowPair(colin.id, stalker.id),

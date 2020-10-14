@@ -33,13 +33,10 @@ trait MockKafkaStreams extends MockSchemaRegistry {
     k: K,
     v: V,
     timestamp: Long = System.currentTimeMillis()
-  )(
-    testDriver: TopologyTestDriver
   ) = inputTopic.pipeInput(k, v, timestamp)
 
   def readOutput[K, V](
     outputTopic: TestOutputTopic[K, V]
-  )(implicit testDriver: TopologyTestDriver) =
-    outputTopic.readKeyValue()
+  ) = outputTopic.readKeyValue()
 
 }
